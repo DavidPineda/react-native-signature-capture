@@ -157,7 +157,9 @@ public class RSSignatureCaptureMainView extends LinearLayout implements OnClickL
     if (file.exists()) {
       file.delete();
     }
-
+    WritableMap event = Arguments.createMap();
+    ReactContext reactContext = (ReactContext) getContext();
+    event.putBoolean("save", true);
     try {
 
       Log.d("React Signature", "Save file-======:" + saveFileInExtStorage);
@@ -169,22 +171,20 @@ public class RSSignatureCaptureMainView extends LinearLayout implements OnClickL
         out.close();
       }
 
-
       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       Bitmap resizedBitmap = getResizedBitmap(this.signatureView.getSignature());
       resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
 
-
       byte[] byteArray = byteArrayOutputStream.toByteArray();
       String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-      WritableMap event = Arguments.createMap();
       event.putString("pathName", file.getAbsolutePath());
       event.putString("encoded", encoded);
-      ReactContext reactContext = (ReactContext) getContext();
-      reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topChange", event);
     } catch (Exception e) {
+      event.putString("error", e.getMessage());
       e.printStackTrace();
+    } finally {
+      reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topChange", event);
     }
   }
 
